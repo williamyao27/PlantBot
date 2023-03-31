@@ -1,3 +1,4 @@
 # Keep these secret!
 .env
 .idea
+__pycache__
