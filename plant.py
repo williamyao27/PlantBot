@@ -149,7 +149,7 @@ class PlantManager:
             await ctx.send(f"{old_name} renamed to {self.__name}.")
         else:
             # INVALID USAGE
-            await ctx.send("`!plant name <name>`")
+            await ctx.send("`$plant name <name>`")
 
     async def __water(self, ctx) -> None:
         """Increment hydration for this server's plant and send notification.
@@ -220,7 +220,7 @@ class PlantManager:
                 await ctx.send(str_so_far)
             else:
                 # INVALID USAGE
-                await ctx.send("!plant bank [all]")
+                await ctx.send("`$plant bank [all]`")
 
         # Option 2 (default): Report caller's wealth and rank
         else:
@@ -268,7 +268,7 @@ class PlantManager:
 
         # Default: INVALID USAGE
         else:
-            await ctx.send("`!plant sell <fruit> <num> or !plant sell all`")
+            await ctx.send("`$plant sell <fruit> <num> or $plant sell all`")
             return
 
         # Sell any fruit if sell_all, or sell all of the given fruit until num reached or none left
