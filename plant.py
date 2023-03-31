@@ -41,7 +41,7 @@ class PlantManager:
             self.__reset_economy()
 
         # Start tick cycles
-        self.tick.start()
+        self.__tick.start()
 
     def __reset_plant(self) -> None:
         """Initialize the stats of the plant for this PlantManager.
@@ -202,7 +202,7 @@ class PlantManager:
             await ctx.send(f"Your inventory is empty.")
 
     async def __check_wealth(self, ctx, *args) -> None:
-        """Send a message indicating either the caller or all server membes' wealth.
+        """Send a message indicating either the caller or all server members' wealth.
         """
         aid = ctx.author.id
 
@@ -214,7 +214,10 @@ class PlantManager:
         if len(args) >= 2:
             if args[1] == "all":
                 str_so_far = "**Server bank accounts:**"
-                for uid in self.__economy.keys():
+
+                # Create list of all participants in descending order of bank account
+                uids = sorted(self.__economy.keys(), key=lambda k: self.__economy[k], reverse=True)
+                for uid in uids:
                     user = await ctx.guild.fetch_member(uid)
                     str_so_far += f"\n**{user.display_name}** has ${round(self.__economy[uid], 2)}."
                 await ctx.send(str_so_far)
@@ -325,7 +328,7 @@ class PlantManager:
                 await ctx.message.add_reaction("❓")
 
     @tasks.loop(seconds=30)
-    async def tick(self) -> None:
+    async def __tick(self) -> None:
         """Re-evaluate plant stats for this new time period.
         """
         if self.__alive:
