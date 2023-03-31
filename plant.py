@@ -212,19 +212,15 @@ class PlantManager:
 
         # Option 1: Report all members' wealth
         if len(args) >= 2:
-            pass
-            # if args[1] == "all":
-            #     str_so_far = "**Server bank accounts:**"
-            #     client = discord.Client()
-            #     client.run()
-            #     for uid in self.__economy.keys():
-            #         user = await client.fetch_user(uid)
-            #         str_so_far += f"\n**{user.display_name}** has ${round(self.__economy[uid], 2)}."
-            #     await ctx.send(str_so_far)
-            #     client.close()
-            # else:
-            #     # Invalid usage
-            #     await ctx.send("!plant bank [all]")
+            if args[1] == "all":
+                str_so_far = "**Server bank accounts:**"
+                for uid in self.__economy.keys():
+                    user = await ctx.guild.fetch_member(uid)
+                    str_so_far += f"\n**{user.display_name}** has ${round(self.__economy[uid], 2)}."
+                await ctx.send(str_so_far)
+            else:
+                # INVALID USAGE
+                await ctx.send("!plant bank [all]")
 
         # Option 2 (default): Report caller's wealth and rank
         else:
@@ -233,7 +229,7 @@ class PlantManager:
             rank = sorted_economy.index(aid) + 1  # Add 1 to start counting from 1
 
             # Report info
-            await ctx.send(f"**{aid.display_name}** has "
+            await ctx.send(f"**{ctx.author.display_name}** has "
                            f"${round(self.__economy[aid], 2)} "
                            f"(Rank: {rank}).")
 
