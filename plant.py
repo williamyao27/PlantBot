@@ -21,6 +21,21 @@ FRUIT_MARKET = {
     ":fish:": 7.5,
     ":gem:": 50.0,
 }
+PLANT_EMOJI_URL = "https://images.emojiterra.com/twitter/v13.1/512px/1fab4.png"
+SKULL_EMOJI_URL = "https://images.emojiterra.com/twitter/v13.1/512px/1f480.png"
+
+
+def create_embed(ctx, title="", description="", thumbnail="") -> discord.Embed:
+    """Return a properly formatted embed based on the given parameters. Note that fields must still
+    be added manually by the caller.
+    """
+    embed = discord.Embed(title=title,
+                          url="https://github.com/williamyao27/PlantBot",
+                          description=description,
+                          color=0x3E721D)
+    embed.set_thumbnail(url=thumbnail)
+    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+    return embed
 
 
 class PlantManager:
@@ -85,10 +100,12 @@ class PlantManager:
 
             # Push price back to normal
             if new_price < FRUIT_MARKET[fruit]:
-                new_price += 0.1
+                new_price += 0.01
+            if new_price > FRUIT_MARKET[fruit] * 2:
+                new_price -= 0.01
 
             # Fluctuation with general inflation
-            new_price *= random.uniform(0.97, 1.05)
+            new_price *= random.uniform(0.98, 1.0225)
 
             self.__market[fruit] = new_price
 
@@ -117,28 +134,41 @@ class PlantManager:
         """
         if self.__alive:
             # Generate fruit string first
-            fruit_str = " ".join(self.__fruits)
+            fruits = " ".join(self.__fruits)
 
-            # Summary of plant statistics and available fruit
-            await ctx.send(":potted_plant:\n")
-            await ctx.send(f"*{self.__name}*\n"
-                           f"**Hydration:** {round(self.__hydration, 2)}%\n"
-                           f"**Happiness:** {round(self.__happiness, 2)}% ({self.__mood()})\n"
-                           f"**Fruits:** {fruit_str if fruit_str != '' else 'None'}")
+            # Summary of plant statistics and available fruit as embed
+            embed = create_embed(ctx, title=f"**{self.__name}**",
+                                 description=f"**Fruits:** {fruits if fruits != '' else 'None'}",
+                                 thumbnail=PLANT_EMOJI_URL)
+            embed.add_field(name="**Hydration:**",
+                            value=f"{round(self.__hydration, 2)}%",
+                            inline=True)
+            embed.add_field(name="**Happiness:**",
+                            value=f"{round(self.__happiness, 2)}%",
+                            inline=True)
+            embed.add_field(name="**Mood:**",
+                            value=f"{self.__mood()}",
+                            inline=True)
+            await ctx.send(embed=embed)
+
         else:
             # Death overview
-            await ctx.send(":skull:\n")
-            await ctx.send(f"*{self.__name}*\n"
-                           f"**Plant died due to {self.__death_cause}**.")
+            embed = create_embed(ctx, title=f"**{self.__name}**",
+                                 description=f"Died due to {self.__death_cause}.",
+                                 thumbnail=SKULL_EMOJI_URL)
+            await ctx.send(embed=embed)
 
     async def __respawn(self, ctx) -> None:
         """Respawn this server's plant.
         """
         if self.__alive:
-            await ctx.send(f"Cannot respawn the plant because {self.__name} is still alive.")
+            embed = create_embed(ctx, description=f"Cannot respawn the plant because "
+                                                  f"{self.__name} is still alive.")
+            await ctx.send(embed=embed)
         else:
             self.__reset_plant()
-            await ctx.send("Respawned the plant.")
+            embed = create_embed(ctx, description="Respawned the plant.")
+            await ctx.send(embed=embed)
 
     async def __set_name(self, ctx, *args) -> None:
         """Set name for this server's plant and send notification.
@@ -156,20 +186,24 @@ class PlantManager:
         """
         if self.__alive:
             self.__hydration += 10.
-            await ctx.send(f"Thanks for watering {self.__name}! "
-                           f"Its hydration is {round(self.__hydration, 2)}%.")
+            embed = create_embed(ctx, description=f"Thanks for watering {self.__name}! "
+                                                  f"Hydration: **{round(self.__hydration, 2)}%**.")
+            await ctx.send(embed=embed)
         else:
-            await ctx.send(f"You cannot water {self.__name} because it died.")
+            embed = create_embed(ctx, description=f"You can't water {self.__name} because it died.")
+            await ctx.send(embed=embed)
 
     async def __pet(self, ctx) -> None:
         """Increment happiness for this server's plant and send notification.
         """
         if self.__alive:
             self.__happiness = min(self.__happiness + 10., 100.)
-            await ctx.send(f"Thanks for petting {self.__name}! "
-                           f"Its happiness is {round(self.__happiness, 2)}%.")
+            embed = create_embed(ctx, description=f"Thanks for petting {self.__name}! "
+                                                  f"Happiness: **{round(self.__happiness, 2)}%**.")
+            await ctx.send(embed=embed)
         else:
-            await ctx.send(f"You cannot pet {self.__name} because it died.")
+            embed = create_embed(ctx, description=f"You can't pet {self.__name} because it died.")
+            await ctx.send(embed=embed)
 
     async def __harvest(self, ctx) -> None:
         """Harvest all fruit from the plant to the caller's inventory and send notification showing
@@ -181,13 +215,16 @@ class PlantManager:
         if len(self.__fruits) > 0:
             # Add all fruits to harvester inventory
             inventory.extend(self.__fruits)
-            await ctx.send(f"You harvested the plant, receiving: {' '.join(self.__fruits)}")
+            embed = create_embed(ctx, description=f"You harvested the plant, "
+                                                  f"receiving: {' '.join(self.__fruits)}")
+            await ctx.send(embed=embed)
 
             # Reset fruits on plant
             self.__fruits.clear()
         else:
             # No fruit
-            await ctx.send(f"There are no fruit to harvest.")
+            embed = create_embed(ctx, description="There are no fruit to harvest.")
+            await ctx.send(embed=embed)
 
     async def __check_inventory(self, ctx) -> None:
         """Send a message displaying the caller's inventory.
@@ -197,9 +234,11 @@ class PlantManager:
 
         # Send message
         if len(inventory) > 0:
-            await ctx.send(f"Your inventory: {' '.join(inventory)}")
+            embed = create_embed(ctx, description=f"Your inventory: {' '.join(inventory)}")
+            await ctx.send(embed=embed)
         else:
-            await ctx.send(f"Your inventory is empty.")
+            embed = create_embed(ctx, description="Your inventory is empty.")
+            await ctx.send(embed=embed)
 
     async def __check_wealth(self, ctx, *args) -> None:
         """Send a message indicating either the caller or all server members' wealth.
@@ -213,14 +252,15 @@ class PlantManager:
         # Option 1: Report all members' wealth
         if len(args) >= 2:
             if args[1] == "all":
-                str_so_far = "**Server bank accounts:**"
+                str_so_far = ""
 
                 # Create list of all participants in descending order of bank account
                 uids = sorted(self.__economy.keys(), key=lambda k: self.__economy[k], reverse=True)
                 for uid in uids:
                     user = await ctx.guild.fetch_member(uid)
-                    str_so_far += f"\n**{user.display_name}** has ${round(self.__economy[uid], 2)}."
-                await ctx.send(str_so_far)
+                    str_so_far += f"**{user.display_name}**: ${round(self.__economy[uid], 2)}\n"
+                embed = create_embed(ctx, title="**Leaderboard**", description=str_so_far)
+                await ctx.send(embed=embed)
             else:
                 # INVALID USAGE
                 await ctx.send("`$plant bank [all]`")
@@ -232,17 +272,19 @@ class PlantManager:
             rank = sorted_economy.index(aid) + 1  # Add 1 to start counting from 1
 
             # Report info
-            await ctx.send(f"**{ctx.author.display_name}** has "
-                           f"${round(self.__economy[aid], 2)} "
-                           f"(Rank: {rank}).")
+            embed = create_embed(ctx, description=f"You have **${round(self.__economy[aid], 2)}** "
+                                                  f"(Rank: {rank}).")
+            await ctx.send(embed=embed)
 
     async def __check_market(self, ctx) -> None:
         """Send a message displaying the current prices for all fruit in the server market.
         """
-        str_so_far = "**Fruit market prices:**"
+        embed = create_embed(ctx, title="**Fruit market**")
         for fruit in self.__market:
-            str_so_far += "\n" + fruit + " $" + str(round(self.__market[fruit], 2))
-        await ctx.send(str_so_far)
+            embed.add_field(name=fruit,
+                            value=f"${round(self.__market[fruit], 2)}",
+                            inline=True)
+        await ctx.send(embed=embed)
 
     async def __sell(self, ctx, *args) -> None:
         """Sell the type and number of fruit from the caller's inventory based on args.
@@ -287,13 +329,17 @@ class PlantManager:
 
         if num_sold == 0:
             # Did not sell anything
-            await ctx.send("No fruits were sold.")
+            embed = create_embed(ctx, description="No fruits were sold.")
+            await ctx.send(embed=embed)
         else:
             # Report sale information and new balance
             self.__add_wealth(aid, total_sale)
-            await ctx.send(f"You sold {num_sold} " + ("fruit" if sell_all else target_fruit) +
-                           f" for ${round(total_sale, 2)}. "
-                           f"You now have ${round(self.__economy[aid], 2)}.")
+            embed = create_embed(ctx,
+                                 description=f"You sold **{num_sold}** " +
+                                             ("fruit" if sell_all else target_fruit) +
+                                             f" for **${round(total_sale, 2)}**. "
+                                             f"You now have **${round(self.__economy[aid], 2)}**.")
+            await ctx.send(embed=embed)
 
     async def process_cmd(self, ctx, *args) -> None:
         """Process any call to the $plant command for this server.
