@@ -100,10 +100,12 @@ class PlantManager:
 
             # Push price back to normal
             if new_price < FRUIT_MARKET[fruit]:
-                new_price += 0.1
+                new_price += 0.01
+            if new_price > FRUIT_MARKET[fruit] * 2:
+                new_price -= 0.01
 
             # Fluctuation with general inflation
-            new_price *= random.uniform(0.985, 1.025)
+            new_price *= random.uniform(0.98, 1.0225)
 
             self.__market[fruit] = new_price
 
@@ -256,7 +258,7 @@ class PlantManager:
                 uids = sorted(self.__economy.keys(), key=lambda k: self.__economy[k], reverse=True)
                 for uid in uids:
                     user = await ctx.guild.fetch_member(uid)
-                    str_so_far += f"**{user.display_name}**: ${round(self.__economy[uid], 2)}.\n"
+                    str_so_far += f"**{user.display_name}**: ${round(self.__economy[uid], 2)}\n"
                 embed = create_embed(ctx, title="**Leaderboard**", description=str_so_far)
                 await ctx.send(embed=embed)
             else:
@@ -270,8 +272,7 @@ class PlantManager:
             rank = sorted_economy.index(aid) + 1  # Add 1 to start counting from 1
 
             # Report info
-            embed = create_embed(ctx, description=f"**{ctx.author.display_name}** has "
-                                                  f"**${round(self.__economy[aid], 2)}** "
+            embed = create_embed(ctx, description=f"You have **${round(self.__economy[aid], 2)}** "
                                                   f"(Rank: {rank}).")
             await ctx.send(embed=embed)
 
