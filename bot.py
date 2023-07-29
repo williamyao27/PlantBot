@@ -1,5 +1,5 @@
 # ==================================================================================================
-# PlantBot                 Created by Eric Li, William Yao                   Last updated 2023-04-01
+# PlantBot                           Created by William Yao                  Last updated 2023-04-01
 # --------------------------------------------------------------------------------------------------
 # PlantBot is a minigame bot that allows servers to collaboratively grow a plant and harvest fruit.
 # This is the main file to run PlantBot on all connected servers.
